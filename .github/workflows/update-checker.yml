@@ -1,59 +1,31 @@
-#
-# https://github.com/P3TERX/Actions-OpenWrt
-#
-# File: .github/workflows/update-checker.yml
-# Description: Source code update checker
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
-
-name: Update Checker
-
-env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
+#CI项目名
+name: CMCC-RAX3000M-Lede
 
 on:
+  #自动编译：每天早上4点
+  schedule:
+    - cron: 0 20 * * *
+  #手动编译
   workflow_dispatch:
-#  schedule:
-#    - cron: 0 */18 * * *
 
+#CI权限
+permissions: write-all
+
+#CI任务
 jobs:
-  check:
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - name: Get Commit Hash
-      id: getHash
-      run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
-        echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-    - name: Compare Commit Hash
-      id: cacheHash
-      uses: actions/cache@v3
-      with:
-        path: .commitHash
-        key: commitHash_${{ steps.getHash.outputs.commitHash }}
-
-    - name: Save New Commit Hash
-      if: steps.cacheHash.outputs.cache-hit != 'true'
-      run: |
-        echo ${{ steps.getHash.outputs.commitHash }} | tee .commitHash
-
-    - name: Trigger build
-      if: steps.cacheHash.outputs.cache-hit != 'true'
-      uses: peter-evans/repository-dispatch@v2
-      with:
-        token: ${{ github.token }}
-        event-type: Source Code Update
-
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@v2
-      with:
-        retain_days: 0
-        keep_minimum_runs: 2
+  owrt_config:
+    #调用公用编译核心OWRT-CORE.yml
+    uses: ./.github/workflows/OWRT-CORE.yml
+    with:
+      #编译，RAX3000M通用配置
+      OWRT_TARGET: RAX3000m
+      #默认主题
+      OWRT_THEME: bootstrap
+      #默认主机名
+      OWRT_NAME: CMCC-RAX3000m
+      #默认密码，仅作展示，更改无效
+      OWRT_PW: password
+      #默认地址
+      OWRT_IP: 192.168.10.1
+      #默认源码
+      OWRT_URL: https://github.com/padavanonly/immortalwrt-mt798x-6.6.git
